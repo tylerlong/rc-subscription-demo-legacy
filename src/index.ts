@@ -1,4 +1,6 @@
 import RingCentral from '@rc-ex/core';
+import PubNubExtension from '@rc-ex/pubnub';
+import waitFor from 'wait-for-async';
 
 const rc = new RingCentral({
   server: 'https://platform.ringcentral.com',
@@ -6,8 +8,16 @@ const rc = new RingCentral({
 
 const main = async () => {
   rc.token = {access_token: process.env.TOKEN};
-  const extInfo = await rc.restapi().account().extension().get();
-  console.log(JSON.stringify(extInfo, null, 2));
+  const pubNubExtension = new PubNubExtension();
+  await rc.installExtension(pubNubExtension);
+  await pubNubExtension.subscribe(
+    ['/restapi/v1.0/account/~/extension/~/message-store'],
+    body => {
+      console.log(JSON.stringify(body, null, 2));
+    }
+  );
+
+  await waitFor({interval: 999999});
 };
 
 main();
